@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pyjwt
+chromadb
+httpx
+pydantic>=2
+pytest
