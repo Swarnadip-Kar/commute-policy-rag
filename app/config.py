@@ -7,7 +7,7 @@ EMBED_BACKEND = os.getenv('EMBED_BACKEND', 'minilm') # 'hash' in tests
 RETRIEVAL_MODE = os.getenv('RETRIEVAL_MODE', 'vector') # 'hybrid' in Step 13
 LLM_BASE_URL = os.getenv('LLM_BASE_URL', 'https://api.groq.com/openai/v1')
 LLM_API_KEY = os.getenv('LLM_API_KEY', '')
-LLM_MODEL = os.getenv('LLM_MODEL', 'llama-3.1-8b-instant')
+LLM_MODEL = os.getenv('LLM_MODEL', 'openai/gpt-oss-20b')
 LLM_TIMEOUT_S = float(os.getenv('LLM_TIMEOUT_S', '2.0'))
 USE_FAKE_LLM = os.getenv('USE_FAKE_LLM', '0') == '1'
 TOP_K = 3 # chunks retrieved
