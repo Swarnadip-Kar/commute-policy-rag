@@ -13,6 +13,13 @@ No key? `USE_FAKE_LLM=1 docker compose up` starts it, but `/ask` will not give r
 
 > **Reasoning model note:** If using a model with reasoning tokens (e.g. `openai/gpt-oss-20b` on Groq), set `LLM_TIMEOUT_S=8` in your `.env` — the default 2 s is too tight for the extra thinking tokens.
 
+### Or run locally without Docker
+
+    python3 -m venv .venv && source .venv/bin/activate
+    pip install -r requirements.txt
+    python -m app.seed
+    uvicorn app.main:app --port 8000
+
 ## Try it
 
     TOKEN=$(docker compose exec -T api python -m app.mint_token acme)
