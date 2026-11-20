@@ -61,9 +61,14 @@ def main():
     ap.add_argument('--mode', default='vector', choices=['vector', 'hybrid'])
     ap.add_argument('--repeat', type=int, default=1, help='timing runs per case (for p95)')
     ap.add_argument('--pause', type=float, default=0.0, help='seconds between calls (free-tier limits)')
-    ap.add_argument('--out', default='eval_set.jsonl')
+    ap.add_argument('--out', default=None,
+                    help='file name inside evals/ (default eval_set.jsonl, or eval_set_fake.jsonl with --fake)')
     args = ap.parse_args()
     config.RETRIEVAL_MODE = args.mode
+    if not args.fake and not config.LLM_API_KEY:
+        sys.exit('LLM_API_KEY is not set. Put a free Groq or Gemini key in your environment '
+                 '(see README), or run with --fake for a plumbing-only check.')
+    out_name = args.out or ('eval_set_fake.jsonl' if args.fake else 'eval_set.jsonl')
 
     store = PolicyStore(tempfile.mkdtemp())            # fresh store, so every run starts identical
     for c in COMPANIES:
@@ -98,7 +103,7 @@ def main():
         rows.append(case)
         print(('PASS' if case['pass'] else 'FAIL'), case['id'], '; '.join(problems))
 
-    (ROOT / 'evals' / args.out).write_text(
+    (ROOT / 'evals' / out_name).write_text(
         '\n'.join(json.dumps(r, ensure_ascii=False) for r in rows) + '\n')
     nc = [r for r in rows if r['expected'].get('covered') is False]
     print('\n--- summary (mode=%s, llm=%s) ---' % (args.mode, 'fake' if args.fake else config.LLM_MODEL))
