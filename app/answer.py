@@ -55,6 +55,8 @@ def build_prompt(question, hits):
 
 def parse_model_json(raw):
     '''Pull one JSON object out of the reply. None if there isn't a usable one.'''
+    if not isinstance(raw, str):
+        return None
     raw = raw.strip()
     start, end = raw.find('{'), raw.rfind('}')
     if start == -1 or end <= start:
