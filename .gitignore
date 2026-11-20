@@ -4,3 +4,5 @@ __pycache__/
 data/
 *.pyc
 scratch.py
+.pytest_cache/
+evals/eval_set_fake.jsonl
