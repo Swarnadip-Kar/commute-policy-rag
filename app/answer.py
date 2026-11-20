@@ -103,6 +103,7 @@ def _answer(store, llm, company, question):
         log.warning('retrieval timed out')
         return Answer('error', ERROR_MSG)
     ids = [h.chunk_id for h in hits]
+    log.info('retrieval_ms=%d hits=%d', (time.monotonic() - started) * 1000, len(hits))
     if not hits:
         return Answer('not_covered', NOT_COVERED_MSG, retrieved_ids=ids)   # no LLM call at all
 
@@ -123,6 +124,7 @@ def _answer(store, llm, company, question):
     if data is None:
         return Answer('error', ERROR_MSG, retrieved_ids=ids, llm_calls=calls)
 
+    log.info('total_ms_before_validation=%d llm_calls=%d', (time.monotonic() - started) * 1000, calls)
     checked = validate(data, hits)
     if checked is None:
         return Answer('not_covered', NOT_COVERED_MSG, retrieved_ids=ids, llm_calls=calls)

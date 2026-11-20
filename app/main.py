@@ -16,9 +16,13 @@ from .store import PolicyStore
 
 log = logging.getLogger('api')
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
 
 @asynccontextmanager
 async def lifespan(app):
+    if config.JWT_SECRET == 'dev-secret-change-me':
+        log.warning('JWT_SECRET is the development default; set a real secret outside demos')
     embeddings.embed(['warm up'])      # load the model now, not on the first user's request
     yield
 

@@ -1,5 +1,7 @@
 import json
+import time
 
+from app import answer as answer_mod, config
 from app.answer import answer_question
 from app.ingest import ingest_policy
 from app.llm import FakeLLM, LLMError
@@ -92,3 +94,14 @@ def test_poisoned_document_cannot_break_out_of_its_data_block(store):
         return json.dumps({'covered': False, 'answer': '', 'cited_ids': [], 'evidence': ''})
     ask(store, handler, company='evilco', question='What are the rules?')
     assert seen[0].count('<CHUNK') == 1 and seen[0].count('</CHUNK>') == 1
+
+
+def test_slow_retrieval_returns_try_again(store, monkeypatch):
+    def slow(*args, **kwargs):
+        time.sleep(0.5)
+        return []
+    monkeypatch.setattr(answer_mod, 'retrieve', slow)
+    monkeypatch.setattr(config, 'RETRIEVAL_TIMEOUT_S', 0.1)
+    ans, llm = ask(store, lambda s, u: reply())
+    assert ans.status == 'error' and 'try again' in ans.message.lower()
+    assert llm.calls == 0                      # we never reached the LLM
