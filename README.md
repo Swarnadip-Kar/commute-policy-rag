@@ -53,6 +53,16 @@ latency p50: 806 ms   p95: 1036 ms
 
 Full report: [EVALUATION.md](EVALUATION.md).
 
+### Bonus: Hybrid Retrieval (BM25 + Vector via RRF)
+
+Implemented in `app/bm25.py` and `app/retrieval.py` using pure-Python BM25 fused with vector search via Reciprocal Rank Fusion (RRF):
+
+- **How to enable:** Set `RETRIEVAL_MODE=hybrid` in `.env` (or run `python -m evals.run_eval --mode hybrid`).
+- **Comparison on the 17-case eval benchmark:**
+  - **Vector:** hit@3 12/12 (100%), answer pass 16/17 (94%), p95 = **1036 ms**
+  - **Hybrid:** hit@3 12/12 (100%), answer pass 16/17 (94%), p95 = **1120 ms**
+- **Engineering decision:** On this corpus size (6–7 chunks per policy), vector search already achieves 100% hit@3. Hybrid search achieved the exact same accuracy but added ~84 ms latency and an extra full-chunk scan. We kept `vector` as the lean production default and provide `hybrid` as a tested, configurable option. Full analysis in [EVALUATION.md](EVALUATION.md).
+
 ## Design
 
 ```
