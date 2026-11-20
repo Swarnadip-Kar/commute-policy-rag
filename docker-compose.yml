@@ -1,0 +1,18 @@
+services:
+  api:
+    build: .
+    ports:
+      - '8000:8000'
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      LLM_MODEL: ${LLM_MODEL:-llama-3.1-8b-instant}
+      USE_FAKE_LLM: ${USE_FAKE_LLM:-0}
+      EMBED_BACKEND: minilm
+      DATA_DIR: /data
+    volumes:
+      - policy_data:/data
+      - ./evals:/app/evals
+volumes:
+  policy_data:
