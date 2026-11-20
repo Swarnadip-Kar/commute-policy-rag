@@ -21,7 +21,7 @@ YELLOW='\033[1;33m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-clear
+clear || true
 echo -e "${BOLD}${CYAN}================================================================${NC}"
 echo -e "${BOLD}${CYAN}      TENANT-SAFE COMMUTE POLICY ASSISTANT — LIVE DEMO          ${NC}"
 echo -e "${BOLD}${CYAN}================================================================${NC}"
