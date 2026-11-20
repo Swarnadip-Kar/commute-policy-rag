@@ -20,21 +20,101 @@ No key? `USE_FAKE_LLM=1 docker compose up` starts it, but `/ask` will not give r
     python -m app.seed
     uvicorn app.main:app --port 8000
 
-## Try it
+## How to Query the Assistant
 
-    TOKEN=$(docker compose exec -T api python -m app.mint_token acme)
-    curl -s localhost:8000/ask \
-         -H "Authorization: Bearer $TOKEN" \
-         -H 'Content-Type: application/json' \
-         -d '{"question": "Who approves an airport trip?"}'
+### 1. Mint a Company JWT Token
+The JWT carries the authenticated tenant identity in its claims (`company: "acme"`, `sub: "demo-user"`, `role: "employee"`). The request body has no company field (`extra='forbid'`).
 
-**Policy update (new version):**
+```bash
+# Mint an Acme employee token:
+ACME_TOKEN=$(docker compose exec -T api python -m app.mint_token acme)
 
-    docker compose exec api python -m app.upload_policy acme policies/acme_v2.md
+# Mint a Globex employee token:
+GLOBEX_TOKEN=$(docker compose exec -T api python -m app.mint_token globex)
+```
+*(If running locally without Docker, use `python -m app.mint_token <company>`)*
 
-**Reset the demo:**
+### 2. Querying `POST /ask`
 
-    docker compose down -v
+**Example A: Answered query with section citation (Acme)**
+```bash
+curl -s http://localhost:8000/ask \
+  -H "Authorization: Bearer $ACME_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "After what time do women get a security escort?"}' | python3 -m json.tool
+```
+Response:
+```json
+{
+  "status": "answered",
+  "answer": "Women employees dropped after 8 PM receive a security escort in the cab.",
+  "citations": [
+    {
+      "chunk_id": "acme-v1-s2",
+      "document": "Acme Corp Transport Policy",
+      "version": 1,
+      "section": "2",
+      "section_title": "Night shift and escort"
+    }
+  ]
+}
+```
+
+**Example B: Cross-company query (Globex — same question, different policy)**
+```bash
+curl -s http://localhost:8000/ask \
+  -H "Authorization: Bearer $GLOBEX_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "After what time do women get a security escort?"}' | python3 -m json.tool
+```
+Response:
+```json
+{
+  "status": "answered",
+  "answer": "Women employees dropped after 10 PM receive a security escort in the cab.",
+  "citations": [
+    {
+      "chunk_id": "globex-v1-s2",
+      "document": "Globex Transport Policy",
+      "version": 1,
+      "section": "2",
+      "section_title": "Night shift and escort"
+    }
+  ]
+}
+```
+
+**Example C: Silent policy (Strict grounding — prevents hallucinations)**
+```bash
+curl -s http://localhost:8000/ask \
+  -H "Authorization: Bearer $ACME_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Can I bring a guest in the cab?"}' | python3 -m json.tool
+```
+Response:
+```json
+{
+  "status": "not_covered",
+  "answer": "The policy does not say. Please contact the transport desk.",
+  "citations": []
+}
+```
+
+### 3. Policy Update (Atomic Zero-Downtime Flip)
+Upload a new version through the admin endpoint:
+```bash
+docker compose exec api python -m app.upload_policy acme policies/acme_v2.md
+```
+Re-asking the escort question for Acme immediately returns **9 PM**, citing `acme-v2-s2`.
+
+### 4. Reset Stored Data
+```bash
+docker compose down -v
+```
+*(Removes data volume so the next startup re-seeds clean v1 policies).*
+
+### 5. Interactive Swagger UI
+Open **http://localhost:8000/docs** in your browser, click **Authorize**, paste your Bearer token, and test queries interactively.
 
 ## Tests and evaluation
 
@@ -114,11 +194,3 @@ The model never writes citations. It only names chunk IDs; code verifies them ag
 - No rate limiting on `/ask`.
 - Eval set is 17 cases — percentages are coarse; no held-out test set.
 - Injection defence is layered (strip tags, code-side validation) but not absolute.
-
-## AI assistance
-
-I used an AI coding assistant to scaffold and complete this project following the step-by-step guide. I can explain and change every line.
-
-## Demo video
-
-*[Link to be added]*
